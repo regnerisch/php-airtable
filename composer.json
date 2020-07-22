@@ -1,0 +1,19 @@
+{
+    "name": "regnerisch/php-airtable",
+    "type": "library",
+    "license": "ISC",
+    "authors": [
+        {
+            "name": "Jonas Regner",
+            "email": "regnerjonas@protonmail.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Regnerisch\\Airtable\\": "src/"
+        }
+    }
+}
