@@ -11,6 +11,7 @@ class Client
 {
     private $apiKey;
 
+    /** @var HttpClient */
     protected $client;
 
     protected $base;
@@ -27,33 +28,83 @@ class Client
         $this->client = $this->client();
     }
 
-    public function records($table, array $options = []): Records
+    public function records(string $table, array $options = []): Records
     {
-        $records = $this->request('GET', '', [
+        $records = $this->request('GET', $table, [
             'query' => []
         ]);
 
         return Records::fromApi($records);
     }
 
-    public function record(): Record
+    public function record(string $table, string $record): Record
     {
+        $record = $this->request('GET', $table . '/' . $record);
 
+        return Record::fromApi($record);
     }
 
-    public function add(): Records
+    public function create(string $table, $record): Records
     {
+        if ($record instanceof Record) {
+            $recs = new Records([$record]);
+        } else if ($record instanceof Records) {
+            $recs = $record;
+        } else {
+            // TODO: throw new TypeError
+        }
 
+        $records = $this->request('POST', $table, [
+            'json' => [
+                'records' => $recs->map(static function (Record $rec) {
+                    return $rec->toArray();
+                }),
+            ],
+        ]);
+
+        return Records::fromApi($records);
     }
 
-    public function update(): Records
+    public function update(string $table, $record): Records
     {
+        if ($record instanceof Record) {
+            $recs = new Records([$record]);
+        } else if ($record instanceof Records) {
+            $recs = $record;
+        } else {
+            // TODO: throw new TypeError
+        }
 
+        $records = $this->request('PATCH', $table, [
+            'json' => [
+                'records' => $recs->map(static function (Record $rec) {
+                    return $rec->toArray();
+                }),
+            ],
+        ]);
+
+        return Records::fromApi($records);
     }
 
-    public function delete()
+    public function delete(string $table, $record)
     {
+        if ($record instanceof Record) {
+            $recs = new Records([$record]);
+        } else if ($record instanceof Records) {
+            $recs = $record;
+        } else {
+            // TODO: throw new TypeError
+        }
 
+        $records = $this->request('DELETE', $table, [
+            'json' => [
+                'records' => $recs->map(static function (Record $rec) {
+                    return $rec->id();
+                })
+            ],
+        ]);
+
+        return Records::fromApi($records);
     }
 
     /**
@@ -78,7 +129,7 @@ class Client
     private function client(): HttpClient
     {
         return new HttpClient([
-            'base_uri' => 'https://api.airtable.com',
+            'base_uri' => 'https://api.airtable.com/v0/' . $this->base . '/',
             'auth' => [
                 'Authorization' => 'Bearer ' . $this->apiKey,
             ]

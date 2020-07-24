@@ -10,13 +10,13 @@ class Record
 
     protected $fields;
 
-    public function __construct(array $fields = [], ?string $id = null)
+    public function __construct($fields = [], ?string $id = null)
     {
         $this->id = $id;
         $this->fields = new Fields($fields);
     }
 
-    public function id(): string
+    public function id(): ?string
     {
         return $this->id;
     }
@@ -26,12 +26,12 @@ class Record
         return $this->fields;
     }
 
-    public static function fromApi(\stdClass $record)
+    public static function fromApi(object $record): Record
     {
         return new self($record->fields, $record->id);
     }
 
-    public function toApi(): array
+    public function toArray(): array
     {
         return [
             'record' => $this->id,
