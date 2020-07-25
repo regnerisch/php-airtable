@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Airtable;
 
-
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
+use Regnerisch\Airtable\Exceptions\BaseNotSetException;
 
 class Client
 {
@@ -15,6 +16,18 @@ class Client
     protected $client;
 
     protected $base;
+
+    protected $options = [
+        'fields' => null,
+        'filterByFormula' => null,
+        'maxRecords' => null,
+        'pageSize' => null,
+        'sort' => null,
+        'view' => null,
+        'cellFormat' => null,
+        'timeZone' => null,
+        'userLocale' => null,
+    ];
 
     public function __construct(string $apiKey)
     {
@@ -31,33 +44,40 @@ class Client
     public function records(string $table, array $options = []): Records
     {
         $records = $this->request('GET', $table, [
-            'query' => []
+            'query' => array_intersect_key(
+                $options,
+                $this->options,
+            ),
         ]);
 
         return Records::fromApi($records);
     }
 
-    public function record(string $table, string $record): Record
+    public function record(string $table, $record): Record
     {
-        $record = $this->request('GET', $table . '/' . $record);
+        if ($record instanceof Record) {
+            $id = $record->id();
+        } elseif (is_string($record)) {
+            $id = $record;
+        } else {
+            throw new \TypeError('');
+        }
+
+        $record = $this->request('GET', $table . '/' . $id);
 
         return Record::fromApi($record);
     }
 
     public function create(string $table, $record): Records
     {
-        if ($record instanceof Record) {
-            $recs = new Records([$record]);
-        } else if ($record instanceof Records) {
-            $recs = $record;
-        } else {
-            // TODO: throw new TypeError
-        }
+        $recs = $this->validate($record);
 
         $records = $this->request('POST', $table, [
             'json' => [
                 'records' => $recs->map(static function (Record $rec) {
-                    return $rec->toArray();
+                    return [
+                        'fields' => $rec->fields()->toArray(),
+                    ];
                 }),
             ],
         ]);
@@ -65,20 +85,17 @@ class Client
         return Records::fromApi($records);
     }
 
-    public function update(string $table, $record): Records
+    public function update(string $table, $record, bool $destructive = false): Records
     {
-        if ($record instanceof Record) {
-            $recs = new Records([$record]);
-        } else if ($record instanceof Records) {
-            $recs = $record;
-        } else {
-            // TODO: throw new TypeError
-        }
+        $recs = $this->validate($record);
 
-        $records = $this->request('PATCH', $table, [
+        $records = $this->request($destructive ? 'PUT' : 'PATCH', $table, [
             'json' => [
                 'records' => $recs->map(static function (Record $rec) {
-                    return $rec->toArray();
+                    return [
+                        'id' => $rec->id(),
+                        'fields' => $rec->fields()->toArray(),
+                    ];
                 }),
             ],
         ]);
@@ -86,39 +103,51 @@ class Client
         return Records::fromApi($records);
     }
 
-    public function delete(string $table, $record)
+    public function delete(string $table, $record): Records
     {
-        if ($record instanceof Record) {
-            $recs = new Records([$record]);
-        } else if ($record instanceof Records) {
-            $recs = $record;
-        } else {
-            // TODO: throw new TypeError
-        }
+        $recs = $this->validate($record);
 
         $records = $this->request('DELETE', $table, [
-            'json' => [
+            'query' => [
                 'records' => $recs->map(static function (Record $rec) {
                     return $rec->id();
-                })
+                }),
             ],
         ]);
 
         return Records::fromApi($records);
+    }
+
+    protected function validate($record): Records
+    {
+        if ($record instanceof Records) {
+            return $record;
+        }
+
+        if ($record instanceof Record) {
+            return new Records([$record]);
+        }
+
+        if (is_string($record)) {
+            return new Records([
+                new Record([], $record),
+            ]);
+        }
+
+        throw new \TypeError('');
     }
 
     /**
-     * @param string $method
-     * @param string $uri
-     * @param array $options
-     * @return mixed
      * @throws GuzzleException
      * @throws \JsonException
+     * @throws BaseNotSetException
+     *
+     * @return mixed
      */
-    private function request(string $method, string $uri = '', array $options = [])
+    protected function request(string $method, string $uri = '', array $options = [])
     {
-        if (!$this->base) {
-            // TODO: Throw InvalidBaseException
+        if (!$this->client) {
+            throw new BaseNotSetException('Base not set. Did you call useBase()?');
         }
 
         $response = $this->client->request($method, $uri, $options);
@@ -126,13 +155,13 @@ class Client
         return json_decode($response->getBody()->getContents(), false, 512, JSON_THROW_ON_ERROR);
     }
 
-    private function client(): HttpClient
+    protected function client(): HttpClient
     {
         return new HttpClient([
             'base_uri' => 'https://api.airtable.com/v0/' . $this->base . '/',
-            'auth' => [
+            'headers' => [
                 'Authorization' => 'Bearer ' . $this->apiKey,
-            ]
+            ],
         ]);
     }
 }

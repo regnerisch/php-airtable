@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Tests;
-
 
 use PHPUnit\Framework\TestCase;
 use Regnerisch\Airtable\Record;
@@ -21,7 +21,7 @@ class RecordsTest extends TestCase
         $this->expectException(\TypeError::class);
         $records = new Records([
             new Record([]),
-            'Record'
+            'Record',
         ]);
     }
 
@@ -46,26 +46,31 @@ class RecordsTest extends TestCase
      */
     public function testFromApi()
     {
-        $records = Records::fromApi([
-            new class {
-                public function __construct()
-                {
-                    $this->id = 'id1';
-                    $this->fields = new class {
-                        public $Property1 = 'Value 1';
-                    };
-                }
-            },
-            new class {
-                public function __construct()
-                {
-                    $this->id = 'id2';
-                    $this->fields = new class {
-                        public $Property2 = 'Value 2';
-                    };
-                }
+        $records = Records::fromApi(new class() {
+            public function __construct()
+            {
+                $this->records = [
+                    new class() {
+                        public function __construct()
+                        {
+                            $this->id = 'id1';
+                            $this->fields = new class() {
+                                public $Property1 = 'Value 1';
+                            };
+                        }
+                    },
+                    new class() {
+                        public function __construct()
+                        {
+                            $this->id = 'id2';
+                            $this->fields = new class() {
+                                public $Property2 = 'Value 2';
+                            };
+                        }
+                    },
+                ];
             }
-        ]);
+        });
 
         self::assertEquals(
             [
@@ -73,14 +78,14 @@ class RecordsTest extends TestCase
                     'record' => 'id1',
                     'fields' => [
                         'Property1' => 'Value 1',
-                    ]
+                    ],
                 ],
                 [
                     'record' => 'id2',
                     'fields' => [
-                        'Property2' => 'Value 2'
-                    ]
-                ]
+                        'Property2' => 'Value 2',
+                    ],
+                ],
             ],
             $records->toArray()
         );

@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Airtable;
-
 
 class Record
 {
@@ -28,14 +28,14 @@ class Record
 
     public static function fromApi(object $record): Record
     {
-        return new self($record->fields, $record->id);
+        return new self($record->fields ?? [], $record->id);
     }
 
     public function toArray(): array
     {
         return [
             'record' => $this->id,
-            'fields' => $this->fields()->toArray()
+            'fields' => $this->fields()->toArray(),
         ];
     }
 }

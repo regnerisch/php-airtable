@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Airtable;
-
 
 class Fields extends \ArrayIterator
 {
@@ -10,8 +10,9 @@ class Fields extends \ArrayIterator
 
     /**
      * Fields constructor.
+     *
      * @param array|\stdClass $fields
-     * @param int $flags
+     * @param int             $flags
      */
     public function __construct($fields)
     {

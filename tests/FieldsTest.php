@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Tests;
-
 
 use PHPUnit\Framework\TestCase;
 use Regnerisch\Airtable\Fields;
@@ -21,7 +21,7 @@ class FieldsTest extends TestCase
             'Property 1' => 'Value 1',
             'Property 2' => 'Value 2',
             'Property 3' => true,
-            'Property 4' => ['Value 4']
+            'Property 4' => ['Value 4'],
         ]);
 
         self::assertEquals(
@@ -68,7 +68,7 @@ class FieldsTest extends TestCase
         self::assertEquals(
             [
                 'NewProperty' => 'Value 1',
-                'Property 2' => 'Value 2'
+                'Property 2' => 'Value 2',
             ],
             $fields->toArray()
         );

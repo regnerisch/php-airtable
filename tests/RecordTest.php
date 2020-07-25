@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Tests;
-
 
 use PHPUnit\Framework\TestCase;
 use Regnerisch\Airtable\Record;
@@ -18,7 +18,7 @@ class RecordTest extends TestCase
     public function test__constructWithoutId()
     {
         $record = new Record([
-            'Property 1' => 'Value 1'
+            'Property 1' => 'Value 1',
         ]);
 
         self::assertInstanceOf(
@@ -28,7 +28,7 @@ class RecordTest extends TestCase
 
         self::assertEquals(
             [
-                'Property 1' => 'Value 1'
+                'Property 1' => 'Value 1',
             ],
             $record->fields()->toArray()
         );
@@ -44,7 +44,7 @@ class RecordTest extends TestCase
     public function test__constructWithId()
     {
         $record = new Record([
-            'Property 1' => 'Value 1'
+            'Property 1' => 'Value 1',
         ], 'id');
 
         self::assertInstanceOf(
@@ -54,7 +54,7 @@ class RecordTest extends TestCase
 
         self::assertEquals(
             [
-                'Property 1' => 'Value 1'
+                'Property 1' => 'Value 1',
             ],
             $record->fields()->toArray()
         );
@@ -70,11 +70,11 @@ class RecordTest extends TestCase
      */
     public function testFromApi()
     {
-        $record = Record::fromApi(new class extends \stdClass {
+        $record = Record::fromApi(new class() extends \stdClass {
             public function __construct()
             {
                 $this->id = 'id';
-                $this->fields = new class extends \stdClass {
+                $this->fields = new class() extends \stdClass {
                     public $Property1 = 'Value 1';
                 };
             }
@@ -84,8 +84,8 @@ class RecordTest extends TestCase
             [
                 'record' => 'id',
                 'fields' => [
-                    'Property1' => 'Value 1'
-                ]
+                    'Property1' => 'Value 1',
+                ],
             ],
             $record->toArray()
         );

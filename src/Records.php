@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Regnerisch\Airtable;
-
 
 class Records extends \ArrayIterator
 {
@@ -12,12 +12,7 @@ class Records extends \ArrayIterator
     {
         foreach ($records as $record) {
             if (!$record instanceof Record) {
-                throw new \TypeError(sprintf(
-                    'Record passed to %s must be an instance of %s, %s given.',
-                    __METHOD__,
-                    !is_object($record) ? gettype($record) : get_class($record),
-                    Record::class
-                ));
+                throw new \TypeError(sprintf('Record passed to %s must be an instance of %s, %s given.', __METHOD__, !is_object($record) ? gettype($record) : get_class($record), Record::class));
             }
 
             $this->records[$record->id()] = $record;
@@ -26,10 +21,10 @@ class Records extends \ArrayIterator
         parent::__construct($this->records);
     }
 
-    public static function fromApi(array $records): self
+    public static function fromApi(object $body): self
     {
         $data = [];
-        foreach ($records as $record) {
+        foreach ($body->records as $record) {
             $data[] = Record::fromApi($record);
         }
 
@@ -48,6 +43,6 @@ class Records extends \ArrayIterator
 
     public function map(callable $callback)
     {
-        return array_map($callback, $this->records);
+        return array_map($callback, array_values($this->records));
     }
 }
